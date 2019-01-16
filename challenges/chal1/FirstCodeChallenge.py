@@ -14,6 +14,6 @@ string1 = "abcabcbb"
 string2 = "bbbbb"
 string3 = "pwwkew"
 
-longestString(string1)
-longestString(string2)
-longestString(string3)
+longestString('The answer is "abc", with the length of ' + string1)
+longestString('The answer is "b", with the length of ' + string2)
+longestString('The answer is "wke", with the length of ' + string3)
