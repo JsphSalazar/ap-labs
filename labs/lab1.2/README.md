@@ -30,3 +30,4 @@ To Compile
 ```
 gcc -o broadcast broadcast.c
 ```
+But it is not necessary since we are broadcasting a message between terminals.
