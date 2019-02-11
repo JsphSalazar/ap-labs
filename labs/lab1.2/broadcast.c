@@ -1,11 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <string.h>
-#include <errno.h>
 #include <ctype.h>
-#include <dirent.h>
+#include <unistd.h>
+#include <errno.h>
 #include <fcntl.h>
+#include <dirent.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -42,7 +42,7 @@ int main(int argc, char **argv){
 
 	if (dir == NULL){
 		perror("Error directory: ");
-		return EXIT_FAILURE;
+		return 1;
 	}
 
 	char *pathpts;
@@ -82,7 +82,7 @@ int main(int argc, char **argv){
 	}
 
 	closedir(dir);
-	return EXIT_SUCCESS;
+	return 0;
 }
 
 void usage(){
