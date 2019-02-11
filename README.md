@@ -1,2 +1,3 @@
-# ap-labs
-Repository for the Advanced Programming class 
+AP-LABS
+=======
+Repository for the Advanced Programming class
