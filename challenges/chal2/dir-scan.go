@@ -19,16 +19,16 @@ var directories int = 0
 var symbolic int = 0
 var others int = 0
 
-func seek(dir string, fi os.FileInfo, err error) error {
-	if fi.Mode()&os.ModeSymlink != 0 {
+func seek(dir string, info os.FileInfo, err error) error {
+	if info.Mode()&os.ModeSymlink != 0 {
 		symbolic++
 		return nil;
 	}
-	if fi.IsDir() {
+	if info.IsDir() {
 		directories++
 		return nil;
 	}
-	if fi.Mode().IsRegular() {
+	if info.Mode().IsRegular() {
 		others++
 		return nil;
 	}
@@ -46,7 +46,6 @@ func main() {
 		fmt.Println("Usage: ./dir-scan <directory>")
 		os.Exit(1)
 	}
-
 	scanDir(os.Args[1])
 	fmt.Printf("Path\t%s\n" + 
 				"Directories:\t%d\n" +
