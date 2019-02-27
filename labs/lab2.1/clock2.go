@@ -6,10 +6,10 @@ import (
 	"net"
 	"time"
 	"fmt"
-	"flag"
+	//"flag"
 )
 
-var port = flag.Int("port", 8080, "listen port")
+//var port = flag.Int("port", 8080, "listen port")
 
 func handleConn(c net.Conn) {
 	defer c.Close()
@@ -23,8 +23,19 @@ func handleConn(c net.Conn) {
 }
 
 func main() {
-	flag.Parse()
-	listener, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", *port))
+	//flag.Parse()
+	if len(os.Args) != 3 {
+		log.Printf("Usage: clock2.go -port [port]\n");
+		return
+	}
+
+	if os.Args[1] != "port" {
+		log.Printf("2\n");
+		return;
+	}
+
+	localhost := "localhost" + os.Args[2];
+	listener, err := net.Listen("tcp", localhost)
 	if err != nil {
 		log.Fatal(err)
 	}
