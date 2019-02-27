@@ -1,53 +1,56 @@
 package main
 
-import(
-	"io"
+import (
 	"fmt"
-	"bufio"
+	"os"
+	"io"
 	"log"
 	"net"
-	"os"
-	"strings"
 	"time"
+	"bufio"
+	"strings"
 )
 
-type clock struct{
+type Clock struct {
 	name, host string
 }
 
-func (c *clock) watch(w io.Writer, r io.Reader) {
-	s := bufio.NewScanner(r)
-	for s.Scan() {
-		fmt.Printf(w,"%s: %s\n", c.name, s.Text())
+func (c *Clock) getHour(reader io.Reader, writer io.Writer) {
+	scanner := bufio.NewScanner(reader)
+	for scanner.Scan() {
+		fmt.Fprintf(writer, "%s: %s\n", c.name, scanner.Text())
 	}
-	fmt.Println(c.name, "Done")
-	if s.Err() != nil {
-		log.Printf("Can not read from %s: %s")
+
+	if scanner.Err() != nil {
+		log.Printf("There's an error with %s: %s", c.name, scanner.Err())
 	}
 }
 
 func main() {
-	if len(os.Args) == 1 {
-		fmt.Fprintln(os.Stderr, "Usage: clockWall NAME=HOST")
+	if len(os.Args) <= 1 {
+		fmt.Fprintln(os.Stderr, "Usage: ./clockWall City=localhost:# [...]")
 		os.Exit(1)
 	}
-	clocks := make([]*clock, 0)
-	for _, a := range os.Args[1:] {
-		fields := strings.Split(a, "=")
+
+	clocks := make([]*Clock, 0)
+	inputCities := os.Args[1:]
+
+	for _, input := range inputCities {
+		fields := strings.Split(input, "=")
 		if len(fields) != 2 {
-			fmt.Fprintf(os.Stderr, "Bad arg: %s\n", a)
+			fmt.Fprintf(os.Stderr, "The argument is wrong (please use as marked on usage) %s\n", input)
 			os.Exit(1)
 		}
-		clocks = append(clocks, &clock{fields[0], fields[1]})
+		clocks = append(clocks, &Clock{fields[0], fields[1]})
 	}
+
 	for _, c := range clocks {
-		conn, err := net.Dial("TCP", c.host)
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer conn.Close()
-		go c.watch(os.Stdout, conn)
+		userInput, _ := net.Dial("tcp", c.host)
+
+		defer userInput.Close()
+		go c.getHour(userInput, os.Stdout)
 	}
+
 	for {
 		time.Sleep(time.Minute)
 	}

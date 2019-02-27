@@ -1,50 +1,42 @@
+// Clock2 is a concurrent TCP server that periodically writes the time.
 package main
 
 import (
+	"flag"
+	"fmt"
 	"io"
 	"log"
 	"net"
+	"os"
 	"time"
-	"fmt"
-	//"flag"
 )
-
-//var port = flag.Int("port", 8080, "listen port")
 
 func handleConn(c net.Conn) {
 	defer c.Close()
 	for {
-		_, err := io.WriteString(c, time.Now().Format("15:04:05\n"))
+		loc, _ := time.LoadLocation(os.Getenv("TZ"))
+		t := time.Now().In(loc)
+		_, err := io.WriteString(c, t.Format("15:04:05\n"))
 		if err != nil {
-			return
+			return // e.g., client disconnected
 		}
 		time.Sleep(1 * time.Second)
 	}
 }
 
 func main() {
-	//flag.Parse()
-	if len(os.Args) != 3 {
-		log.Printf("Usage: clock2.go -port [port]\n");
-		return
-	}
-
-	if os.Args[1] != "port" {
-		log.Printf("2\n");
-		return;
-	}
-
-	localhost := "localhost" + os.Args[2];
-	listener, err := net.Listen("tcp", localhost)
+	port := flag.Int("port", 8000, "default port")
+	flag.Parse()
+	listener, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", *port))
 	if err != nil {
 		log.Fatal(err)
 	}
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
-			log.Print(err)
+			log.Print(err) // e.g., connection aborted
 			continue
 		}
-		go handleConn(conn)
+		go handleConn(conn) // handle connections concurrently
 	}
 }
