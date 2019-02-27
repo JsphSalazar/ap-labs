@@ -7,6 +7,17 @@ Write a cross-referencer in C that prints a list of all words in a document, and
 ./cross-ref document.txt
 ```
 
+Compile
+-------
+```
+gcc -o cross-ref cross-ref.c
+```
+Usage
+-----
+```
+./cross-ref document.txt
+```
+
 General Requirements and Considerations
 ---------------------------------------
 - Use the `cross-ref.c` file for your implementation.
