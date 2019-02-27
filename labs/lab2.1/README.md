@@ -26,3 +26,23 @@ General Requirements and Considerations
 - Follow the command-line arguments convention.
 - Don't forget to handle errors properly.
 - Coding best practices implementation will be also considered.
+
+Compile
+-------
+```
+go build clock2.go
+go build clockWall.go
+```
+Usage
+-----
+Initialize the servers with the following comands
+```
+# Clock Servers initialization
+$ TZ=US/Eastern    ./clock2 -port 8010 &
+$ TZ=Asia/Tokyo    ./clock2 -port 8020 &
+$ TZ=Europe/London ./clock2 -port 8030 &
+```
+Then, to run:
+```
+./clockWall NewYork=localhost:8010 Tokyo=localhost:8020 London=localhost:8030
+```
