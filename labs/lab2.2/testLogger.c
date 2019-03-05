@@ -7,10 +7,10 @@ int panicf(const char *format, ...);
 
 int main()
 {
-	infof("This is information test\n");
-	warnf("This is a %s test\n", "warn");
-	errorf("This is an %s %s\n", "error", "test");
-	panicf("This is a panic test\n");
+	infof("Testing information\n");
+	warnf("Testing a %s \n", "warn");
+	errorf("Testing an %s %s\n", "error", "test");
+	panicf("Testing panic\n");
 	return 0;
 }
 
