@@ -1,4 +1,4 @@
-#include "logger.h"
+#include "logger.c"
 
 int infof(const char *format, ...);
 int warnf(const char *format, ...);
