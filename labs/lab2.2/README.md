@@ -26,6 +26,18 @@ General Requirements and Considerations
 - Don't forget to handle errors properly.
 - Coding best practices implementation will be also considered.
 
+Usage
+-----
+
+Include the `logger.c` file into de `testLogger.c` file, after that compile it like this:
+```
+gcc -o testLogger testLogger.c
+```
+
+Then to run try this:
+```
+./testLogger
+```
 
 Submission Details
 ==================
