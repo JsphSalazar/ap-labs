@@ -1,18 +1,44 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-int 
+#define RESET		 0
+#define BRIGHT		 1
+#define DIM		 2
+#define UNDERLINE   	 3
+#define BLINK		 4
+#define REVERSE		 7
+#define HIDDEN		 8
+
+#define BLACK 		 0
+#define RED		 1
+#define GREEN		 2
+#define YELLOW		 3
+#define BLUE		 4
+#define MAGENTA		 5
+#define CYAN		 6
+#define	WHITE		 7
+
+void textcolor(int attr, int fg, int bg) {
+  char command[13];
+  sprintf(command, "%c[%d;%d;%dm", 0x1B, attr, fg + 30, bg + 40);
+  printf ("%s", command);
+}
+
+int
 infof (const char *format, ...)
 {
     va_list arg;
     int done;
 
-    printf("INFO: ");
+    textcolor (BRIGHT, BLACK, GREEN);
+    printf ("INFO:");
+    textcolor (RESET, WHITE, HIDDEN);
+    printf (" ");
 
     va_start(arg, format);
     done = vprintf(format, arg);
     va_end(arg);
-    return done;    
+    return done;
 }
 
 int 
@@ -21,7 +47,10 @@ warnf (const char *format, ...)
     va_list arg;
     int done;
 
-    printf("WARN: ");
+    textcolor (BRIGHT, WHITE, CYAN);
+    printf ("WARN:");
+    textcolor (RESET, WHITE, HIDDEN);
+    printf (" ");
 
     va_start(arg, format);
     done = vprintf(format, arg);
@@ -35,8 +64,11 @@ errorf (const char *format, ...)
   va_list arg;
   int done;
 
-  printf ("ERROR: ");
-  
+  textcolor (BRIGHT, WHITE, BLUE);
+  printf ("ERROR:");
+  textcolor (RESET, WHITE, HIDDEN);
+  printf (" ");
+
   va_start (arg, format);
   done = vprintf (format, arg);
   va_end (arg);
@@ -49,7 +81,9 @@ panicf (const char *format, ...)
   va_list arg;
   int done;
 
+  textcolor (BRIGHT, WHITE, RED);
   printf ("PANIC:");
+  textcolor (RESET, WHITE, HIDDEN);
   printf (" ");
 
   va_start (arg, format);
@@ -57,3 +91,4 @@ panicf (const char *format, ...)
   va_end (arg);
   return done;
 }
+
