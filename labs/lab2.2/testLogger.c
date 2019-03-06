@@ -7,10 +7,10 @@ int panicf(const char *format, ...);
 
 int main()
 {
-	infof("Testing information\n");
-	warnf("Testing a %s \n", "warn");
-	errorf("Testing an %s %s\n", "error", "test");
-	panicf("Testing panic\n");
+	infof("General information.\n");
+	warnf("Warnings.\n");
+	errorf("Errors.\n");
+	panicf("Panics. Non recoverable issues with core dump.\n");
 	return 0;
 }
 
