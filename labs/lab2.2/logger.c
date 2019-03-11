@@ -24,9 +24,7 @@ void textcolor(int attr, int fg, int bg) {
   printf ("%s", command);
 }
 
-int
-infof (const char *format, ...)
-{
+int infof (const char *format, ...) {
     va_list arg;
     int done;
 
@@ -41,9 +39,7 @@ infof (const char *format, ...)
     return done;
 }
 
-int 
-warnf (const char *format, ...)
-{
+int warnf (const char *format, ...) {
     va_list arg;
     int done;
 
@@ -58,9 +54,7 @@ warnf (const char *format, ...)
     return done;
 }
 
-int
-errorf (const char *format, ...)
-{
+int errorf (const char *format, ...) {
   va_list arg;
   int done;
 
@@ -75,9 +69,7 @@ errorf (const char *format, ...)
   return done;
 }
 
-int
-panicf (const char *format, ...)
-{
+int panicf (const char *format, ...) {
   va_list arg;
   int done;
 
