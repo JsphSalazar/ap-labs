@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <stdarg.h>
+#include <syslog.h>
+#include <string.h>
 
 #define RESET		 0
 #define BRIGHT		 1
@@ -42,59 +44,87 @@ int infof (const char *format, ...) {
     va_list arg;
     int done;
 
-    textcolor (BRIGHT, BLACK, GREEN);
-    printf ("INFO:");
-    textcolor (RESET, WHITE, HIDDEN);
-    printf (" ");
-
-    va_start(arg, format);
-    done = vprintf(format, arg);
-    va_end(arg);
-    return done;
+    // include this part whitin an if-else statement
+    if(outputLogger == 0) {  
+        textcolor (BRIGHT, BLACK, GREEN);
+        printf ("INFO:");
+        textcolor (RESET, WHITE, HIDDEN);
+        printf (" ");
+        va_start(arg, format);
+        done = vprintf(format, arg);
+        va_end(arg);
+        return done;
+    } else {
+        va_start(arg, format);
+        vsyslog(LOG_USER | LOG_INFO, format, arg);
+        va_end(arg);
+        return 1;
+    }
 }
 
 int warnf (const char *format, ...) {
     va_list arg;
     int done;
 
-    textcolor (BRIGHT, WHITE, CYAN);
-    printf ("WARN:");
-    textcolor (RESET, WHITE, HIDDEN);
-    printf (" ");
-
-    va_start(arg, format);
-    done = vprintf(format, arg);
-    va_end(arg);
-    return done;
+    // include this part whitin an if-else statement
+    if(outputLogger == 0) {
+        textcolor (BRIGHT, WHITE, CYAN);
+        printf ("WARN:");
+        textcolor (RESET, WHITE, HIDDEN);
+        printf (" ");
+        va_start(arg, format);
+        done = vprintf(format, arg);
+        va_end(arg);
+        return done;
+    } else {
+        va_start(arg, format);
+        vsyslog(LOG_USER | LOG_WARN, format, arg);
+        va_end(arg);
+        return 1;
+    }
 }
 
 int errorf (const char *format, ...) {
   va_list arg;
   int done;
 
-  textcolor (BRIGHT, WHITE, BLUE);
-  printf ("ERROR:");
-  textcolor (RESET, WHITE, HIDDEN);
-  printf (" ");
-
-  va_start (arg, format);
-  done = vprintf (format, arg);
-  va_end (arg);
-  return done;
+    // include this part whitin an if-else statement
+    if(outputLogger == 0) {
+        textcolor (BRIGHT, WHITE, BLUE);
+        printf ("ERROR:");
+        textcolor (RESET, WHITE, HIDDEN);
+        printf (" ");
+        va_start (arg, format);
+        done = vprintf (format, arg);
+        va_end (arg);
+        return done;
+    } else {
+        va_start(arg, format);
+        vsyslog(LOG_USER | LOG_ERR, format, arg);
+        va_end(arg);
+        return 1;
+    }
 }
 
 int panicf (const char *format, ...) {
   va_list arg;
   int done;
 
-  textcolor (BRIGHT, WHITE, RED);
-  printf ("PANIC:");
-  textcolor (RESET, WHITE, HIDDEN);
-  printf (" ");
-
-  va_start (arg, format);
-  done = vprintf (format, arg);
-  va_end (arg);
-  return done;
+    // include this part whitin an if-else statement
+    if(outputLogger == 0) {
+        textcolor (BRIGHT, WHITE, RED);
+        printf ("PANIC:");
+        textcolor (RESET, WHITE, HIDDEN);
+        printf (" ");
+        va_start (arg, format);
+        done = vprintf (format, arg);
+        va_end (arg);
+        return done;
+    } else {
+        va_start(arg, format);
+        vsyslog(LOG_USER | LOG_PAN, format, arg);
+        va_end(arg);
+        return 1;
+    }
 }
 
