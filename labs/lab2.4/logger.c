@@ -5,14 +5,14 @@
 
 #define RESET		 0
 #define BRIGHT		 1
-#define DIM		     2
-#define UNDERLINE    3
+#define DIM		 2
+#define UNDERLINE    	 3
 #define BLINK		 4
 #define REVERSE		 7
 #define HIDDEN		 8
 
 #define BLACK 		 0
-#define RED		     1
+#define RED		 1
 #define GREEN		 2
 #define YELLOW		 3
 #define BLUE		 4
@@ -78,7 +78,7 @@ int warnf (const char *format, ...) {
         return done;
     } else {
         va_start(arg, format);
-        vsyslog(LOG_USER | LOG_WARN, format, arg);
+        vsyslog(LOG_USER | LOG_WARNING, format, arg);
         va_end(arg);
         return 1;
     }
@@ -122,7 +122,7 @@ int panicf (const char *format, ...) {
         return done;
     } else {
         va_start(arg, format);
-        vsyslog(LOG_USER | LOG_PAN, format, arg);
+        vsyslog(LOG_USER | LOG_EMERG, format, arg);
         va_end(arg);
         return 1;
     }
