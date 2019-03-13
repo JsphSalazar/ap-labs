@@ -20,7 +20,7 @@ int main()
     	infof("<info> General information\n");
 	warnf("<warn> Warnings %s from syslog\n", "warn");
 	errorf("<error> Errors %s %s from syslog\n", "error", "test");
-   	 panicf("<panic> Panics from syslog\n");
+   	panicf("<panic> Panics from syslog\n");
 
     return 0;
 }
