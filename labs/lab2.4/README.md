@@ -15,6 +15,14 @@ You will handle the following log types:
 
 You can use the **The Linux Programming Interface** book as a reference for your implementation. See *37th chapter on 5th section*.
 
+Usage
+=====
+```
+make
+```
+./testLogger
+```
+
 General Requirements and Considerations
 ---------------------------------------
 - Use the `testLogger.c` file for testing your `logger.c` library implementation.
