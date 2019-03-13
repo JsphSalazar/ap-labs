@@ -10,12 +10,16 @@
 //
 // Crawl3 adds support for depth limiting.
 //
+
+// REFERENCES:
+// GO Programming Language Chapter 5 - findlinks
+
 package main
 
 import (
 	"fmt"
 	"log"
-	"os"
+	"flag"
 
 	"gopl.io/ch5/links"
 )
@@ -24,9 +28,13 @@ import (
 // tokens is a counting semaphore used to
 // enforce a limit of 20 concurrent requests.
 var tokens = make(chan struct{}, 20)
+var depth int
 
-func crawl(url string) []string {
+func crawl(url string, actualDepth int) []string {
 	fmt.Println(url)
+	if actualDepth >= depth {
+		return nil
+	}
 	tokens <- struct{}{} // acquire a token
 	list, err := links.Extract(url)
 	<-tokens // release the token
@@ -43,11 +51,15 @@ func crawl(url string) []string {
 func main() {
 	worklist := make(chan []string)
 	var n int // number of pending sends to worklist
+	depthCounter := 0
 
 	// Start with the command-line arguments.
 	n++
-	go func() { worklist <- os.Args[1:] }()
-
+	flag.IntVar(&depth, "depth", 1, "Max crawl depth") //1 as default
+	flag.Parse()
+	//go func() { worklist <- os.Args[1:] }()
+	go func() { worklist <- flag.Args()} ()
+	
 	// Crawl the web concurrently.
 	seen := make(map[string]bool)
 	for ; n > 0; n-- {
@@ -57,7 +69,8 @@ func main() {
 				seen[link] = true
 				n++
 				go func(link string) {
-					worklist <- crawl(link)
+					depthCounter++
+					worklist <- crawl(link, depthCounter)
 				}(link)
 			}
 		}
