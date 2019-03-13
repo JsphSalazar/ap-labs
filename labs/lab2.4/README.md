@@ -21,7 +21,6 @@ Usage
 make
 ```
 ./testLogger
-```
 
 General Requirements and Considerations
 ---------------------------------------
