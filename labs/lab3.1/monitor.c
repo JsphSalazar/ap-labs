@@ -26,4 +26,19 @@ static int get_files(const char *fpath, const struct stat *sb, int flag, struct 
 		exit(EXIT_FAILURE);
         }
         return 0;
-    }
+}
+
+static void displayInotifyEvent(struct inotify_event *i) {
+	if (i->mask & IN_CREATE)
+		infof("IN_CREATE ");
+	if (i->mask & IN_DELETE)
+		infof("IN_DELETE ");
+	if (i->mask & IN_MOVED_FROM)
+		infof("IN_MOVED_FROM ");
+	if (i->mask & IN_MOVED_TO)
+		infof("IN_MOVED_TO ");
+	printf("\n");
+
+	if (i->len > 0)
+		printf("        name = %s\n", i->name);
+}
