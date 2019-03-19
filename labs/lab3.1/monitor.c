@@ -42,3 +42,47 @@ static void displayInotifyEvent(struct inotify_event *i) {
 	if (i->len > 0)
 		printf("        name = %s\n", i->name);
 }
+
+int main(int argc, char *argv[]) {
+	inotifyFd = inotify_init();
+	if (inotifyFd == -1) {
+		errorf("couldn't create inotifyFd");
+		exit(EXIT_FAILURE);
+	}
+
+	int flags = FTW_PHYS;	/* Don't follow symbolic links */
+	if (nftw((argc < 2) ? "." : argv[1], get_files, 20, flags) == -1) {
+		panicf("couldn't transverse nftw");
+		exit(EXIT_FAILURE);
+	}
+
+	char buf[BUF_LEN] __attribute__ ((aligned(8)));
+	ssize_t numRead;
+	char *p;
+	struct inotify_event *event;
+
+	for (;;) {		/* Read events forever */
+		numRead = read(inotifyFd, buf, BUF_LEN);
+		if (numRead == 0) {
+			panicf("read() from inotify fd returned 0!");
+			exit(EXIT_FAILURE);
+		}
+		if (numRead == -1) {
+			errorf("read");
+			exit(EXIT_FAILURE);
+		}
+		// infof("Read %ld bytes from inotify fd\n", (long) numRead);
+		for (p = buf; p < buf + numRead;) {
+			event = (struct inotify_event *)p;
+			displayInotifyEvent(event);
+			p += sizeof(struct inotify_event) + event->len;
+		}
+		inotifyFd = inotify_init();
+		if (nftw((argc < 2) ? "." : argv[1], get_files, 20, flags) ==
+		    -1) {
+			panicf("couldn't transverse nftw");
+			exit(EXIT_FAILURE);
+		}
+	}
+    exit(EXIT_SUCCESS);
+}
