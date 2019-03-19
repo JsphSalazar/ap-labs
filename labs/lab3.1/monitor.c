@@ -13,7 +13,7 @@
 #include <sys/inotify.h>
 #include "logger.h"
 
-#define BUF_LEN(10 * (sizeof(struct inotify_event) + NAME_MAX + 1))
+#define BUF_LEN (10 * (sizeof(struct inotify_event) + NAME_MAX + 1))
 
 int inotifyFd;
 
