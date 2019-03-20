@@ -16,6 +16,20 @@ General Requirements and Considerations
 - Don't forget to handle errors properly.
 - Coding best practices implementation will be also considered.
 
+Usage/Building
+--------------
+For the binaries
+```
+make
+```
+To Run
+```
+./monitor directory
+```
+To clean the folder
+```
+make clean
+```
 
 Submission Details
 ==================
