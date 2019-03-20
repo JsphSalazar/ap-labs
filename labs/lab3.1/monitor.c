@@ -22,7 +22,7 @@ static int get_files(const char *fpath, const struct stat *sb, int flag, struct 
     int wd = inotify_add_watch(inotifyFd, fpath,
 		IN_CREATE | IN_DELETE | IN_MOVED_FROM | IN_MOVED_TO);
     if (wd == -1) {
-        errorf("couldn't add to inotify_add_watch");
+        errorf("Could not add to inotify_add_watch");
 		exit(EXIT_FAILURE);
         }
         return 0;
@@ -46,13 +46,13 @@ static void displayInotifyEvent(struct inotify_event *i) {
 int main(int argc, char *argv[]) {
 	inotifyFd = inotify_init();
 	if (inotifyFd == -1) {
-		errorf("couldn't create inotifyFd");
+		errorf("Could not create inotifyFd");
 		exit(EXIT_FAILURE);
 	}
 
 	int flags = FTW_PHYS;	/* Don't follow symbolic links */
 	if (nftw((argc < 2) ? "." : argv[1], get_files, 20, flags) == -1) {
-		panicf("couldn't transverse nftw");
+		panicf("Could not transverse nftw");
 		exit(EXIT_FAILURE);
 	}
 
@@ -80,7 +80,7 @@ int main(int argc, char *argv[]) {
 		inotifyFd = inotify_init();
 		if (nftw((argc < 2) ? "." : argv[1], get_files, 20, flags) ==
 		    -1) {
-			panicf("couldn't transverse nftw");
+			panicf("Could not transverse nftw");
 			exit(EXIT_FAILURE);
 		}
 	}
