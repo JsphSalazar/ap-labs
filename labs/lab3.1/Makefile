@@ -1,4 +1,13 @@
-all:
+CC       = gcc
+CFLAGS   = -Wall
+LDFLAGS  =
+OBJFILES = logger.o monitor.o
+TARGET   = monitor
 
-	gcc -o monitor monitor.c
-	gcc -o logger logger.c
+all: $(TARGET)
+
+$(TARGET) : $(OBJFILES)
+	$(CC) $(CFLAGS) -o $(TARGET) $(OBJFILES) $(LDFLAGS)
+
+clean:
+	rm -f $(OBJFILES) $(TARGET) *~
