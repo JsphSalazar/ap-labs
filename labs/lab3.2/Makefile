@@ -11,3 +11,5 @@ $(TARGET) : $(OBJFILES)
 
 clean:
 	rm -f $(OBJFILES) $(TARGET) *~
+	rm encoded.txt
+	rm decoded.txt
