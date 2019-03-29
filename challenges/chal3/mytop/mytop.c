@@ -1,315 +1,333 @@
-#define	 _GNU_SOURCE
 #include <stdio.h>
 #include <dirent.h>
-#include <stdlib.h>
-#include <errno.h>
-#include <stdbool.h>
-#include <ctype.h>
 #include <string.h>
-#include <pthread.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
+#include <stdlib.h>
 #include <unistd.h>
-#include <ctype.h>
+#include <signal.h>
+#include <time.h>
 
-#define PROC_PATH     "/proc/"
-#define FD_PATH       "/fd/"    //PROC_PATH + PID + FD_PATH
-#define MEMORY_PATH   "/statm"  //PROC_PATH + PID + MEMORY_PATH
-#define STATUS_PATH   "/status" 
-#define NAMEFILE_SIZE 256
-#define STATE_SIZE    20
-#define MAX_PATH_SIZE 50
-#define INT_TO_STR_SIZE 11
-#define BUFF_SIZE     2048
-#define ATTR_SIZE     512
-#define INFO_SIZE     2048
+#define INFO_LENGTH 40
+#define MAX_PROCESSES 1000
 
-
-void clear();
-bool isDirectory(unsigned char *type);
-bool hasPidFormat(char *filename);
-struct process *talloc(void);
-struct threadstruct *threadalloc(void);
-struct process *addnode(struct process *p, unsigned int *pid);
-unsigned int parseUnsigedInt(char * str);
-void treeprint(struct process *p);
-void treeclean(struct process *p);
-void *findInfoForProcess(void *argv);
-unsigned int countFds(char *path);
+char *header = "|%-6s | %-5s | %-40s | %-10s | %-10s | %-4s | %-10s|\n",
+	 *headDiv =	"|-------|--------|------------------------------------------|------------|------------|-----------|-----------|\n",
+	 *tableFormat = "| %-5s | %-6s | %-40s | %-10s | %-9.1fM | %-9s | %-10d|\n";
 
 struct process {
-  unsigned int pid;
-  unsigned int ppid;
-  char*  p_name;
-  char*  state;
-  unsigned int memory;
-  unsigned int no_threads;
-  unsigned int no_openfd; 
-  struct process *left;
-  struct process *right;
+	char name[INFO_LENGTH],
+	state[INFO_LENGTH],
+	pid[INFO_LENGTH],
+	ppid[INFO_LENGTH],
+	memory[INFO_LENGTH],
+	threads[INFO_LENGTH];
+	int openFiles;
 };
 
-struct threadstruct {
-	struct process *mynode;
-	unsigned int pid;
-};
+static const struct process emptyProcess;
+struct process processes[MAX_PROCESSES];
 
-int threadsopen = 0;
-pthread_t threadslist[1000];
+void clear();
+int readProcesses();
+int printProcesses();
+static void saveProcesses(int signo) {
+	FILE *fp;
+	time_t t = time(NULL);
+	struct tm tm = *localtime(&t);
+	char fileName[30];
+	float mem;
+
+	sprintf(fileName, "mytop_status_%d-%d-%d.txt", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday);
+	fp = fopen(fileName, "w");
+	fprintf(fp, header, " PID", "Parent", "Name", "State", "Memory", "# Threads", "Open Files");
+	fprintf(fp, headDiv);
+
+	for(int i = 0; processes[i].name[0] != '\0'; i++) {
+		// convert memory from K to M
+		mem = atof(processes[i].memory) / 1000;
+		fprintf(fp, tableFormat, processes[i].pid, processes[i].ppid, processes[i].name, processes[i].state, mem, processes[i].threads, processes[i].openFiles);
+	}
+	printf("\n Dashboard saved to %s\n", fileName);
+	fclose(fp);
+	sleep(4);
+}
 
 int main(){
-	while(true){
-		DIR *dir;
-		struct process *root;
-		struct dirent *pDirent;
-		unsigned int param;
-	
-		root = NULL;
-		dir = opendir(PROC_PATH);
-		param = 0;
-		if (dir == NULL){
-			perror("opendir(); line 26");
-			exit(EXIT_FAILURE);
-		}
-		
-		while((pDirent = readdir(dir)) != NULL){
-			if (! (isDirectory(&pDirent->d_type) && hasPidFormat(pDirent->d_name)))
-				continue;
-			param = parseUnsigedInt(pDirent->d_name);
-			root = addnode(root, &param);	
-		}
-		closedir(dir);
-		for(int i = 0; i < threadsopen; i++){
-			pthread_join(threadslist[i], NULL);	
-		}
-		printf("| %-11s | %-11s | %-45s | %-20s | %-11s | %-11s | %-11s |\n", 
-				"PID", "PPID", "NAME", "STATUS", "MEMORY", "#THREADS", "OPENFILES");
-		for (int u = 0; u < 143; u++){
-			printf("-");
-		}
-		printf("-\n");
-		treeprint(root);
-		treeclean(root);
-		threadsopen = 0;
-		/*sleep(3);*/
-	  clear();
+	// Place your magic here
+	if(signal(SIGINT, saveProcesses) == SIG_ERR) {
+		printf("Can't catch SIGINT\n");
 	}
-  return EXIT_SUCCESS;
+
+	while(1) {
+		readProcesses();
+		printProcesses();
+		sleep(3);
+		clear();
+	}
+
+	return 0;
+}
+
+int readProcesses() {
+	DIR *d = opendir("/proc/");
+	struct dirent *dir;
+	FILE *fp;
+	char path[30],
+		 fdpath[30],
+		 info[INFO_LENGTH],
+		 c;
+	int dataNum,
+		procNum = 0,
+		opFiles;
+
+
+	memset(info, 0, INFO_LENGTH);
+	strcpy(path, "/proc/");
+	strcpy(fdpath, "/proc/");
+
+	while((dir = readdir(d)) != NULL) {
+
+		// Filters out folders starting with a number
+		if(dir->d_name[0] >= 48 && dir->d_name[0] <= 57) {
+			dataNum = 0;
+			opFiles = 0;
+			// Add status path
+			strcat(path, dir->d_name);
+			strcat(path, "/status");
+
+			// Add fd path
+			strcat(fdpath, dir->d_name);
+			strcat(fdpath, "/fd");
+			// Read status file
+			fp = fopen(path, "r");
+
+			while(dataNum < 6) {
+
+				switch(dataNum) {
+					case 0:
+						do {
+							c = getc(fp);
+						} while(c != 'N' && c != EOF);
+
+						if(c == EOF) {
+							fseek(fp, 0L, SEEK_SET);
+							strcpy(processes[procNum].name, "");
+							break;
+						}
+
+						// Checking to see if what was found was the tag "Name"
+						if(getc(fp) == 'a' && getc(fp) == 'm' && getc(fp) == 'e' && getc(fp) == ':') {
+							do {
+								c = getc(fp);
+							} while(c == ' ' || c == '\t');
+
+							for(int j = 0; c != '\n'; j++) {
+								info[j] = c;
+								c = getc(fp);
+							}
+							strcpy(processes[procNum].name, info);
+
+							// Go back to the beginning of the file
+							fseek(fp, 0L, SEEK_SET);
+						}
+						else {
+							dataNum = -1;
+						}
+						break;
+						case 1:
+							do {
+								c = getc(fp);
+							} while(c != 'S' && c != EOF);
+
+							if(c == EOF) {
+								fseek(fp, 0L, SEEK_SET);
+								break;
+							}
+
+							// Checking to see if what was found was the tag "State"
+							if(getc(fp) == 't' && getc(fp) == 'a' && getc(fp) == 't' && getc(fp) == 'e' && getc(fp) == ':') {
+								do {
+									c = getc(fp);
+								} while(c != '(');
+
+								c = getc(fp);
+
+								for(int j = 0; c != ')'; j++) {
+									info[j] = c;
+									c = getc(fp);
+								}
+								strcpy(processes[procNum].state, info);
+
+								fseek(fp, 0L, SEEK_SET);
+							}
+							else {
+								dataNum = 0;
+							}
+							break;
+							case 2:
+								do {
+									c = getc(fp);
+								} while(c != 'P' && c != EOF);
+
+								if(c == EOF) {
+									fseek(fp, 0L, SEEK_SET);
+			//						strcpy(processes[procNum].pid, "");
+									break;
+								}
+
+								// Checking to see if what was found was the tag "Pid"
+								if(getc(fp) == 'i' && getc(fp) == 'd' && getc(fp) == ':') {
+									do {
+										c = getc(fp);
+									} while(c == ' ' || c == '\t');
+
+									for(int j = 0; c != '\n'; j++) {
+										info[j] = c;
+										c = getc(fp);
+									}
+									strcpy(processes[procNum].pid, info);
+
+									fseek(fp, 0L, SEEK_SET);
+
+								}
+								else {
+									dataNum = 1;
+								}
+								break;
+							case 3:
+								do {
+									c = getc(fp);
+								} while(c != 'P' && c != EOF);
+
+								if(c == EOF) {
+									fseek(fp, 0L, SEEK_SET);
+									break;
+								}
+
+								// Checking to see if what was found was the tag "PPid"
+								if(getc(fp) == 'P' && getc(fp) == 'i' && getc(fp) == 'd' && getc(fp) == ':') {
+									do {
+										c = getc(fp);
+									} while(c == ' ' || c == '\t');
+
+									for(int j = 0; c != '\n'; j++) {
+										info[j] = c;
+										c = getc(fp);
+									}
+									strcpy(processes[procNum].ppid, info);
+
+									fseek(fp, 0L, SEEK_SET);
+								}
+								else {
+									dataNum = 2;
+								}
+								break;
+								case 4:
+									do {
+										c = getc(fp);
+									} while(c != 'V' && c != EOF);
+									if(c == EOF) {
+										fseek(fp, 0L, SEEK_SET);
+										break;
+									}
+
+									// Checking to see if what was found was the tag "VmRSS"
+									if(getc(fp) == 'm' && getc(fp) == 'R' && getc(fp) == 'S' && getc(fp) == 'S' && getc(fp) == ':') {
+										do {
+											c = getc(fp);
+										} while(c == ' ' || c == '\t');
+
+										for(int j = 0; c != ' '; j++) {
+											info[j] = c;
+											c = getc(fp);
+										}
+										strcpy(processes[procNum].memory, info);
+
+										fseek(fp, 0L, SEEK_SET);
+									}
+									else {
+										dataNum = 3;
+									}
+									break;
+									case 5:
+										do {
+											c = getc(fp);
+										} while(c != 'T' && c != EOF);
+
+										if(c == EOF) {
+											fseek(fp, 0L, SEEK_SET);
+											break;
+										}
+
+										// Checking to see if what was found was the tag "Threads"
+										if(getc(fp) == 'h' && getc(fp) == 'r' && getc(fp) == 'e' && getc(fp) == 'a' && getc(fp) == 'd' && getc(fp) == 's' && getc(fp) == ':') {
+
+											do {
+												c = getc(fp);
+											} while(c == ' ' || c == '\t');
+
+											if(c == '\n') {
+												break;
+											}
+
+											for(int j = 0; c != '\n'; j++) {
+												info[j] = c;
+												c = getc(fp);
+											}
+											strcpy(processes[procNum].threads, info);
+
+										}
+										else {
+											dataNum = 4;
+										}
+										break;
+				}
+				memset(info, 0, INFO_LENGTH);
+				dataNum++;
+				c = '\0';
+			}
+
+			fclose(fp);
+			// Check fd directory for files open
+			DIR *fdd = opendir(fdpath);
+			struct dirent *fd_dir;
+			// Count files
+			while((fd_dir = readdir(fdd)) != NULL) {
+				opFiles++;
+			}
+
+			closedir(fdd);
+
+			// Save # of files excluding "." and ".."
+			processes[procNum].openFiles = opFiles - 2;
+
+			strcpy(fdpath, "/proc/");
+			strcpy(path, "/proc/");
+			procNum++;
+		}
+	}
+	closedir(d);
+	return 0;
+}
+
+int printProcesses() {
+	int i = 0;
+	float mem;
+
+	printf(header, " PID", "Parent", "Name", "State", "Memory", "# Threads", "Open Files");
+	printf(headDiv);
+
+	while(processes[i].name[0] != '\0') {
+		// convert memory from K to M
+		mem = atof(processes[i].memory) / 1000;
+		printf(tableFormat, processes[i].pid, processes[i].ppid, processes[i].name, processes[i].state, mem, processes[i].threads, processes[i].openFiles);
+		i++;
+	}
+	return 0;
 }
 
 void clear() {
-  printf("\e[1;1H\e[;f\e[2J"); 
-}
-
-bool isDirectory(unsigned char *type){
-	if (*type == DT_DIR)
-		return true;
-	return false;
-}
-
-bool hasPidFormat(char *filename){
-	unsigned int len = strlen(filename);
-	for (unsigned int i = 0; i < len; i++){
-		if (isdigit(filename[i]) == 0)
-			return false;
+	for(int i = 0; processes[i].name[0] != '\0'; i++) {
+		processes[i] = emptyProcess;
 	}
-	return true;
+	printf("\e[1;1H\e[2J");
 }
-
-struct process *talloc(void)
-{
-	return (struct process *)malloc(sizeof(struct process));
-}
-
-struct threadstruct *threadalloc(void)
-{
-	return (struct threadstruct *)malloc(sizeof(struct threadstruct));
-}
-
-struct process *addnode(struct process *p, unsigned int *pid)
-{
-	int cond;
-
-	if (p == NULL) {
-		p = talloc();
-		p->pid = *pid;
-		p->p_name = (char *) malloc(NAMEFILE_SIZE * sizeof(char));
-		p->state  = (char *) malloc(STATE_SIZE    * sizeof(char));
-		p->left = p->right = NULL;
-
-		struct threadstruct *ts;
-		ts = threadalloc();
-		ts->mynode = p;
-		ts->pid    = *pid;
-		int s = pthread_create(&threadslist[threadsopen++], NULL, findInfoForProcess, (void *) ts);
-		if (s != 0){
-			printf("Couldn't create thread for: %u", *pid);
-			exit(EXIT_FAILURE);
-		}
-		threadsopen++;
-	} else if ((cond = *pid > p->pid ? -1 : 1 ) < 0) {
-		p->left = addnode(p->left, pid);
-	} else {
-		p->right = addnode(p->right, pid);
-	}
-	return p;
-}
-
-unsigned int parseUnsigedInt(char *st)
-{
-	char *x;
-  for (x = st ; *x ; x++) {
-    if (!isdigit(*x))
-      return 0L;
-  }
-  return (strtoul(st, 0L, 10));
-}
-
-void treeprint(struct process *p)
-{
-	if (p != NULL) {
-		treeprint(p->right);
-		printf("| %-11u | %-11u | %-45s | %-20s | %-11uMB | %-11u | %-11u |\n", 
-			p->pid, p->ppid, p->p_name, p->state, (p->memory/1000), p->no_threads, p->no_openfd);
-		treeprint(p->left);
-	}
-}
-
-void treeclean(struct process *p)
-{
-	if (p != NULL) {
-		treeclean(p->right);
-		free(p);
-		treeclean(p->left);
-	}
-}
-
-void *findInfoForProcess(void *param){
-	struct threadstruct* ts;
-	ts = (struct threadstruct *) param;
-	/* Save the routes for the files */
-	char *mempath, *fdpath, *statuspath, *pidstr, *buff, *dataph;
-	mempath    = (char *) malloc(MAX_PATH_SIZE * sizeof(char));
-	statuspath = (char *) malloc(MAX_PATH_SIZE * sizeof(char));
-	fdpath     = (char *) malloc(MAX_PATH_SIZE * sizeof(char));
-	pidstr     = (char *) malloc(INT_TO_STR_SIZE * sizeof(char));
-	buff       = (char *) malloc(BUFF_SIZE * sizeof(char));
-	dataph     = (char *) malloc(BUFF_SIZE * sizeof(char));  //use the largest posible value to store
-
-	sprintf(pidstr, "%u", ts->mynode->pid);
-	strcpy(mempath, PROC_PATH);
-	strcat(mempath, pidstr);     // /proc/<pid>
-	strcpy(fdpath, mempath);      
-	strcpy(statuspath, mempath);
-	strcat(mempath, MEMORY_PATH);
-	strcat(fdpath, FD_PATH);
-	strcat(statuspath, STATUS_PATH);
-	free(pidstr);	
-
-	int fd;
-	fd = open(mempath, O_RDONLY);
-	if (fd == -1){
-		printf("Couldn't open mempath: %s", mempath);
-		ts->mynode->memory = 0; 
-	}
-
-	int i = 0;
-	while (read(fd, buff, BUFF_SIZE) > 0){
-		for (; buff[i] != ' '; i++){
-			dataph[i] = buff[i];	
-		}		
-	}
-	dataph[i] = '\0';
-	ts->mynode->memory = parseUnsigedInt(dataph); 
-	free(mempath);
-	close(fd);
-	
-	ts->mynode->no_openfd = countFds(fdpath);
-	free(fdpath);
-
-	fd = open(statuspath, O_RDONLY);
-	if (fd == -1){
-		printf("Couldn't open statuspath: %s", statuspath);
-		exit(EXIT_FAILURE);
-	}
-	/*free(statuspath);*/
-	char *attr, *info;
-	attr = (char *) malloc(ATTR_SIZE*sizeof(char));
-	info = (char *) malloc(INFO_SIZE*sizeof(char));
-	int offset = 0;
-	int opt;
-	while (read(fd, buff, BUFF_SIZE) > 0) {
-		i = 0;
-		for (; buff[i] != '\n'; i++){
-			dataph[i] = buff[i];	
-		}
-		dataph[i] = '\0';
-		offset += ++i;
-		lseek(fd, offset, SEEK_SET);
-		int j;
-		for (j = 0; dataph[j] != ':'; j++){
-			attr[j] = dataph[j];
-		}
-		attr[j] = '\0';
-
-		if (strcmp(attr, "Name") == 0){
-			opt = 1;
-		} else if (strcmp(attr, "State") == 0){
-			opt = 2;
-		} else if (strcmp(attr, "Threads") == 0){
-			opt = 3;
-		} else if (strcmp(attr, "PPid") == 0){
-			opt = 4;
-		} else {
-			// memset(dataph, '\0', NAMEFILE_SIZE);
-			lseek(fd, offset, SEEK_SET);
-			continue;
-		}
-
-		int k = 0;
-		for (j++; dataph[j] != '\0'; j++){
-			if (isspace(dataph[j]) != 0){
-				continue;
-			}
-			info[k++] = dataph[j];
-		}
-		info[k]='\0';
-
-		switch (opt) {
-			case 1:
-				strcpy(ts->mynode->p_name, info);
-				break;
-			case 2:
-				strcpy(ts->mynode->state, info);
-				break;
-			case 3:
-				ts->mynode->no_threads = parseUnsigedInt(info);
-				break;
-			case 4:
-				ts->mynode->ppid = parseUnsigedInt(info);
-				break;
-		}
-		// memset(dataph, '\0', NAMEFILE_SIZE);
-
-	}
-	close(fd);
-	return (void *) (size_t) ts->pid;
-}
-
-unsigned int countFds(char *path){
-	unsigned int file_count = 0;
-	DIR *dir;
-	struct dirent *entry;
-
-	dir = opendir(path); 
-	if (dir == NULL){
-		perror("opendir(); line 216");
-		exit(EXIT_FAILURE);
-	}
-	while ((entry = readdir(dir)) != NULL)
-         file_count++;
-	closedir(dir);
-	return file_count - 2;
-}
-
