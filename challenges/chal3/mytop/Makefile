@@ -1,5 +1,5 @@
 CC       = gcc
-CFLAGS   = -Wall
+CFLAGS   = -Wall -g -pthread
 LDFLAGS  =
 OBJFILES = mytop.o
 TARGET   = mytop
@@ -11,4 +11,3 @@ $(TARGET) : $(OBJFILES)
 
 clean:
 	rm -f $(OBJFILES) $(TARGET) *~
-	rm -f *.txt
