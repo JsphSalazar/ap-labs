@@ -1,8 +1,8 @@
 #include <stdio.h>
-#include <dirent.h>
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <dirent.h>
 #include <signal.h>
 #include <time.h>
 
@@ -42,7 +42,6 @@ static void saveProcesses(int signo) {
 	fprintf(fp, headDiv);
 
 	for(int i = 0; processes[i].name[0] != '\0'; i++) {
-		// convert memory from K to M
 		mem = atof(processes[i].memory) / 1000;
 		fprintf(fp, tableFormat, processes[i].pid, processes[i].ppid, processes[i].name, processes[i].state, mem, processes[i].threads, processes[i].openFiles);
 	}
@@ -56,14 +55,12 @@ int main(){
 	if(signal(SIGINT, saveProcesses) == SIG_ERR) {
 		printf("Can't catch SIGINT\n");
 	}
-
 	while(1) {
 		readProcesses();
 		printProcesses();
 		sleep(3);
 		clear();
 	}
-
 	return 0;
 }
 
@@ -85,23 +82,19 @@ int readProcesses() {
 	strcpy(fdpath, "/proc/");
 
 	while((dir = readdir(d)) != NULL) {
-
-		// Filters out folders starting with a number
 		if(dir->d_name[0] >= 48 && dir->d_name[0] <= 57) {
 			dataNum = 0;
 			opFiles = 0;
-			// Add status path
+
 			strcat(path, dir->d_name);
 			strcat(path, "/status");
 
-			// Add fd path
 			strcat(fdpath, dir->d_name);
 			strcat(fdpath, "/fd");
-			// Read status file
+
 			fp = fopen(path, "r");
 
 			while(dataNum < 6) {
-
 				switch(dataNum) {
 					case 0:
 						do {
@@ -113,8 +106,7 @@ int readProcesses() {
 							strcpy(processes[procNum].name, "");
 							break;
 						}
-
-						// Checking to see if what was found was the tag "Name"
+						// Looking for "Name"
 						if(getc(fp) == 'a' && getc(fp) == 'm' && getc(fp) == 'e' && getc(fp) == ':') {
 							do {
 								c = getc(fp);
@@ -125,8 +117,6 @@ int readProcesses() {
 								c = getc(fp);
 							}
 							strcpy(processes[procNum].name, info);
-
-							// Go back to the beginning of the file
 							fseek(fp, 0L, SEEK_SET);
 						}
 						else {
@@ -142,8 +132,7 @@ int readProcesses() {
 								fseek(fp, 0L, SEEK_SET);
 								break;
 							}
-
-							// Checking to see if what was found was the tag "State"
+							// Looking for "State"
 							if(getc(fp) == 't' && getc(fp) == 'a' && getc(fp) == 't' && getc(fp) == 'e' && getc(fp) == ':') {
 								do {
 									c = getc(fp);
@@ -156,7 +145,6 @@ int readProcesses() {
 									c = getc(fp);
 								}
 								strcpy(processes[procNum].state, info);
-
 								fseek(fp, 0L, SEEK_SET);
 							}
 							else {
@@ -170,11 +158,9 @@ int readProcesses() {
 
 								if(c == EOF) {
 									fseek(fp, 0L, SEEK_SET);
-			//						strcpy(processes[procNum].pid, "");
 									break;
 								}
-
-								// Checking to see if what was found was the tag "Pid"
+								// Looking for "Pid"
 								if(getc(fp) == 'i' && getc(fp) == 'd' && getc(fp) == ':') {
 									do {
 										c = getc(fp);
@@ -185,7 +171,6 @@ int readProcesses() {
 										c = getc(fp);
 									}
 									strcpy(processes[procNum].pid, info);
-
 									fseek(fp, 0L, SEEK_SET);
 
 								}
@@ -202,8 +187,7 @@ int readProcesses() {
 									fseek(fp, 0L, SEEK_SET);
 									break;
 								}
-
-								// Checking to see if what was found was the tag "PPid"
+								// Looking for "PPid"
 								if(getc(fp) == 'P' && getc(fp) == 'i' && getc(fp) == 'd' && getc(fp) == ':') {
 									do {
 										c = getc(fp);
@@ -214,7 +198,6 @@ int readProcesses() {
 										c = getc(fp);
 									}
 									strcpy(processes[procNum].ppid, info);
-
 									fseek(fp, 0L, SEEK_SET);
 								}
 								else {
@@ -229,8 +212,7 @@ int readProcesses() {
 										fseek(fp, 0L, SEEK_SET);
 										break;
 									}
-
-									// Checking to see if what was found was the tag "VmRSS"
+									// Looking for "VmRSS"
 									if(getc(fp) == 'm' && getc(fp) == 'R' && getc(fp) == 'S' && getc(fp) == 'S' && getc(fp) == ':') {
 										do {
 											c = getc(fp);
@@ -257,8 +239,7 @@ int readProcesses() {
 											fseek(fp, 0L, SEEK_SET);
 											break;
 										}
-
-										// Checking to see if what was found was the tag "Threads"
+										// Looking for "Threads"
 										if(getc(fp) == 'h' && getc(fp) == 'r' && getc(fp) == 'e' && getc(fp) == 'a' && getc(fp) == 'd' && getc(fp) == 's' && getc(fp) == ':') {
 
 											do {
@@ -274,7 +255,6 @@ int readProcesses() {
 												c = getc(fp);
 											}
 											strcpy(processes[procNum].threads, info);
-
 										}
 										else {
 											dataNum = 4;
@@ -287,17 +267,13 @@ int readProcesses() {
 			}
 
 			fclose(fp);
-			// Check fd directory for files open
 			DIR *fdd = opendir(fdpath);
 			struct dirent *fd_dir;
-			// Count files
 			while((fd_dir = readdir(fdd)) != NULL) {
 				opFiles++;
 			}
-
 			closedir(fdd);
 
-			// Save # of files excluding "." and ".."
 			processes[procNum].openFiles = opFiles - 2;
 
 			strcpy(fdpath, "/proc/");
@@ -317,7 +293,6 @@ int printProcesses() {
 	printf(headDiv);
 
 	while(processes[i].name[0] != '\0') {
-		// convert memory from K to M
 		mem = atof(processes[i].memory) / 1000;
 		printf(tableFormat, processes[i].pid, processes[i].ppid, processes[i].name, processes[i].state, mem, processes[i].threads, processes[i].openFiles);
 		i++;
