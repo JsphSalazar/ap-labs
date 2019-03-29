@@ -26,9 +26,9 @@ To Run
 sudo ./mytop
 ```
 
-It needs sudo privileges to start the processes.
-The process will remain running until it stops.
-Also, you can create a snapshot for the current output as a txt file.
+- It needs sudo privileges to start the processes.
+- The process will remain running until it stops.
+- Also, you can create a snapshot for the current output as a txt file.
 
 | Snapshot                       | Ctrl^C |
 |--------------------------------|--------|
