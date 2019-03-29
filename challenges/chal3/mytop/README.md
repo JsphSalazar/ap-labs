@@ -15,6 +15,25 @@ Requirements
 - Coding best practices that we learned in class will be reviewed.
 - Before submitting you code, make sure it's compiling and running correctly.
 
+Usage
+-----
+To compile
+```
+make
+```
+To Run
+```
+sudo ./mytop
+```
+
+It needs sudo privileges to start the processes.
+The process will remain running until it stops.
+Also, you can create a snapshot for the current output as a txt file.
+
+| Snapshot                       | Ctrl^C |
+|--------------------------------|--------|
+| Finish the process             | Ctrl^Z |
+
 
 Sample mytop output
 -------------------
