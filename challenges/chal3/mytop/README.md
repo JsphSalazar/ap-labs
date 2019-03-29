@@ -30,9 +30,10 @@ sudo ./mytop
 - The process will remain running until it stops.
 - Also, you can create a snapshot for the current output as a txt file.
 
-| Snapshot                       | Ctrl^C |
-|--------------------------------|--------|
-| Finish the process             | Ctrl^Z |
+| Features                   |        |
+|----------------------------|--------|
+| Snapshot                   | Ctrl^C |
+| Finish the process         | Ctrl^Z |
 
 
 Sample mytop output
