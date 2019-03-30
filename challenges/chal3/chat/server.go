@@ -13,9 +13,9 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"regexp"
-	"strings"
 	"time"
+	"strings"
+	"regexp"
 )
 
 //!+broadcaster
@@ -66,7 +66,6 @@ func handleConn(conn net.Conn) {
 				fmt.Fprintf(conn, "| %s |", key)
 			}
 			fmt.Fprintln(conn, "")
-
 		} else if msg == "/time" {
 			fmt.Fprintf(conn, "irc-server > %s\n", time.Now().Format("Mon Jan _2 15:04:05 2006"))
 		} else if matches, _ := regexp.MatchString("^/msg .+ .+", msg); matches {
