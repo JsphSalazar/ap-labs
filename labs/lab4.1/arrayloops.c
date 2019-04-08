@@ -10,6 +10,7 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "logger.h"
 
 #define NTHREADS      4
 #define ARRAYSIZE   1000000

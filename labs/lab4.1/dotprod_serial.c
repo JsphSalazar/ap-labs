@@ -9,6 +9,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "logger.h"
+#include "logger.h"
+
 /*
      The following structure contains the necessary information
      to allow the function "dotprod" to access its input data and

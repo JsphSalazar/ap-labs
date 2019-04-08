@@ -14,6 +14,7 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "logger.h"
 
 /*
      The following structure contains the necessary information

@@ -10,6 +10,7 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "logger.h"
 
 /* Define global data where everyone can see them */
 #define NUMTHRDS 8

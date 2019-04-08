@@ -11,6 +11,7 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "logger.h"
 
 #define NUM_THREADS  6
 #define TCOUNT 10

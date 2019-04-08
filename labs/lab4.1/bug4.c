@@ -10,6 +10,7 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "logger.h"
 
 /* Define and scope what needs to be seen by everyone */
 #define NUM_THREADS  3
