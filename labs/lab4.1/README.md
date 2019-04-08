@@ -27,6 +27,16 @@ General Requirements and Considerations
 - Don't forget to handle errors properly.
 - Coding best practices implementation will be also considered.
 
+Usage
+-----
+To compile
+```
+make
+```
+To run every program, you must use the following command
+```
+./filename
+```
 
 Submission Details
 ==================
